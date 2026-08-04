@@ -74,7 +74,7 @@ A local, reproducible DevSecOps pipeline demonstrating **Shift-Left Security** p
 1. **Clone the repository:**
    ```bash
    git clone [https://github.com/MadManJJ/appsec-scan-dashboard.git](https://github.com/MadManJJ/appsec-scan-dashboard.git)
-   cd devsecops-pipeline
+   cd appsec-scan-dashboard
    ```
 
 2. **Configure environment:**
