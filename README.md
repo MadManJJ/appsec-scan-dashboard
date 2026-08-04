@@ -7,17 +7,17 @@ A local, reproducible DevSecOps pipeline demonstrating **Shift-Left Security** p
 ## System Screenshots
 
 ### Security Dashboard
-![Security Dashboard](path/to/security-dashboard.png)
+![Security Dashboard](assets/security-dash.png)
 *Unified Nginx Security Dashboard (Port 8000)*
 
 ### Security Reports
 | Trivy Vulnerability Scan | Gitleaks Secret Scan |
 | :---: | :---: |
-| ![Trivy HTML Report](path/to/trivy-report.png) | ![Gitleaks HTML Report](path/to/gitleaks-report.png) |
+| ![Trivy HTML Report](assets/trivy-report.png) | ![Gitleaks HTML Report](assets/gitleaks-report.png) |
 | *Trivy CVE Analysis Report* | *Gitleaks Detected Secrets Report* |
 
 ### Deployed Application
-![OWASP Juice Shop Application](path/to/juice-shop-app.png)
+![OWASP Juice Shop Application](assets/owasp-juice.png)
 *Deployed Vulnerable Application (OWASP Juice Shop - Port 3000)*
 
 ---
