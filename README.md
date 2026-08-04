@@ -1,6 +1,6 @@
 # Automated CI/CD Security Pipeline
 
-A local, reproducible DevSecOps pipeline demonstrating **Shift-Left Security** principles. This project automates static code scanning, secret detection, container vulnerability checks, and security report aggregation before application deployment.
+A local, reproducible DevSecOps pipeline demonstrating **Shift-Left Security** principles. Automates static code scanning, secret detection, container vulnerability checks, and security report aggregation before deployment. Built for local execution and easily portable to any CI/CD runner (e.g., GitHub Actions, GitLab CI).
 
 ---
 
@@ -18,32 +18,31 @@ A local, reproducible DevSecOps pipeline demonstrating **Shift-Left Security** p
 
 ### Deployed Application
 ![OWASP Juice Shop Application](assets/owasp-juice.png)
-*Deployed Vulnerable Application (OWASP Juice Shop - Port 3000)*
+*Target Application (OWASP Juice Shop - Port 3000)*
 
 ---
 
-## Pipeline Architecture & Workflow
+## Pipeline Workflow
 
 ```text
 ┌─────────────────┐    ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│ Developer Commit│───>│ Gitleaks Scan   │───>│ Trivy Image Scan │───>│ Deployment &    │
-│ / Execution     │    │ (Secret Check)  │    │ (CVE Check)      │    │ Nginx Dashboard │
+│ Execution /     │───>│ Gitleaks Scan   │───>│ Trivy Image Scan │───>│ Deployment &    │
+│ CI Pipeline     │    │ (Secret Check)  │    │ (CVE Check)      │    │ Nginx Dashboard │
 └─────────────────┘    └─────────────────┘    └──────────────────┘    └─────────────────┘
 ```
 
-1. **Secret Detection (Gitleaks):** Scans the codebase for hardcoded secrets, API keys, and sensitive credentials.
-2. **Container Security (Trivy):** Analyzes target container images and local Dockerfiles for known CVEs (High/Critical) and formats results into clean HTML reports using custom templates.
-3. **Automated Deployment:** Spins up the application container environment via Docker upon successful scan execution.
-4. **Report Hosting:** Mounts generated security artifacts directly to a dedicated Nginx container serving a centralized web dashboard.
+1. **Secret Detection (Gitleaks):** Scans the codebase for hardcoded secrets and credentials.
+2. **Container Security (Trivy):** Analyzes target container images and Dockerfiles for High/Critical CVEs and formats results into HTML reports.
+3. **Deployment & Dashboard:** Deploys target application containers via Docker and serves aggregated reports via a dedicated Nginx dashboard.
 
 ---
 
 ## Tech Stack
 
 * **Security Tools:** Trivy, Gitleaks
-* **Containerization & Web Hosting:** Docker, Nginx
-* **Automation & Scripting:** Bash Shell Scripting, Git Hooks (`.pre-commit-config.yaml`)
-* **Target Environment:** Node.js / OWASP Juice Shop
+* **Containerization & Hosting:** Docker, Nginx
+* **Automation:** Bash Shell Scripting
+* **Target Application:** OWASP Juice Shop (Node.js)
 
 ---
 
@@ -51,13 +50,12 @@ A local, reproducible DevSecOps pipeline demonstrating **Shift-Left Security** p
 
 ```text
 .
-├── deploy-and-scan.sh       # Main CI/CD pipeline orchestration script
-├── .pre-commit-config.yaml  # Git hook blueprint for automation
-├── .env.example             # Template for environment configuration
-├── mock-vulnerable-app/     # Sample local application for vulnerability testing
+├── deploy-and-scan.sh     # Main CI/CD pipeline orchestration script
+├── .env.example           # Template for environment configuration
+├── mock-vulnerable-app/   # Sample application for testing
 │   ├── Dockerfile
 │   └── app.js
-└── reports/                 # Auto-generated security report artifacts (git-ignored)
+└── reports/               # Auto-generated security report artifacts
 ```
 
 ---
@@ -69,11 +67,11 @@ A local, reproducible DevSecOps pipeline demonstrating **Shift-Left Security** p
 * Git
 * Trivy & Gitleaks installed locally
 
-### Installation & Execution
+### Quick Start
 
 1. **Clone the repository:**
    ```bash
-   git clone [https://github.com/MadManJJ/appsec-scan-dashboard.git](https://github.com/MadManJJ/appsec-scan-dashboard.git)
+   git clone https://github.com/MadManJJ/appsec-scan-dashboard.git
    cd appsec-scan-dashboard
    ```
 
@@ -92,8 +90,18 @@ A local, reproducible DevSecOps pipeline demonstrating **Shift-Left Security** p
    * **Security Dashboard:** `http://localhost:8000`
    * **Target Application:** `http://localhost:3000`
 
+> **CI/CD Integration:** To run this in GitHub Actions, GitLab CI, or Jenkins, execute `deploy-and-scan.sh` directly as a pipeline step or adapt the script commands into your workflow configuration.
+
 ---
 
-## 📌 Homelab Architecture Note
+## Homelab Architecture
 
-> **Note:** This pipeline was developed and validated inside a local Fedora homelab environment. Cross-device access during development was routed via SSH Local Port Forwarding (`-L 3000:localhost:3000 -L 8000:localhost:8000`). While executed locally, the shell orchestration logic and hook structures are cloud-agnostic and directly portable to GitHub Actions or GitLab CI runners.
+Developed in a local Fedora homelab environment accessed remotely from Windows via SSH local port forwarding.
+
+```text
+┌─────────────────────────┐          Ethernet / SSH          ┌──────────────────────────────────┐
+│   Windows Host (Client) │ ───────────────────────────────> │  Fedora Workstation (Homelab)    │
+│  Browser: localhost:8000│   -L 8000:localhost:8000         │  - Docker Container (Nginx)      │
+│  Browser: localhost:3000│   -L 3000:localhost:3000         │  - Docker Container (Juice Shop) │
+└─────────────────────────┘                                  └──────────────────────────────────┘
+```
