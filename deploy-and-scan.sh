@@ -3,6 +3,9 @@ echo "=========================================="
 echo " [CI/CD] "
 echo "=========================================="
 
+# Track failed stages
+FAILED_STAGES=()
+
 if [ -f .env ]; then
     echo "[+] Loading environment variables from .env"
     source .env
@@ -16,36 +19,36 @@ mkdir -p "$REPORTS_DIR"
 
 if [ ! -f "html.tpl" ]; then
     echo "[+] Downloading Trivy HTML template..."
-    curl -sLO https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/html.tpl
+    curl -sLO https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/html.tpl || FAILED_STAGES+=("Template Download")
 fi
 
 # Secret Scanning
 echo "[+] Stage 1: Running Gitleaks..."
-gitleaks detect --source "$TARGET_DIR" -v --report-path $REPORTS_DIR/gitleaks-report.json
+gitleaks detect --source "$TARGET_DIR" -v --report-path "$REPORTS_DIR/gitleaks-report.json" || FAILED_STAGES+=("Stage 1: Secret Scanning")
 
 # Filesystem Scan
 echo "[+] Stage 2: Running Trivy Filesystem Scan..."
-trivy fs "$TARGET_DIR" --severity HIGH,CRITICAL --format json --output $REPORTS_DIR/trivy-fs.json
-trivy fs "$TARGET_DIR" --severity HIGH,CRITICAL --format template --template "@html.tpl" --output $REPORTS_DIR/trivy-fs.html
+(trivy fs "$TARGET_DIR" --severity HIGH,CRITICAL --format json --output "$REPORTS_DIR/trivy-fs.json" && \
+ trivy fs "$TARGET_DIR" --severity HIGH,CRITICAL --format template --template "@html.tpl" --output "$REPORTS_DIR/trivy-fs.html") || FAILED_STAGES+=("Stage 2: Trivy Filesystem Scan")
 
 # Pull & Scan Container Image
 echo "[+] Stage 3: Building Container Image ($IMAGE_NAME)..."
-docker build -t "$IMAGE_NAME" "$TARGET_DIR"
+docker build -t "$IMAGE_NAME" "$TARGET_DIR" || FAILED_STAGES+=("Stage 3: Building Container Image")
 
 # Container Scan
 echo "[+] Stage 4: Running Trivy Container Image Scan..."
-trivy image $IMAGE_NAME --severity CRITICAL --format json --output $REPORTS_DIR/trivy-image.json
-trivy image $IMAGE_NAME --severity CRITICAL --format template --template "@html.tpl" --output $REPORTS_DIR/trivy-image.html
+(trivy image "$IMAGE_NAME" --severity CRITICAL --format json --output "$REPORTS_DIR/trivy-image.json" && \
+ trivy image "$IMAGE_NAME" --severity CRITICAL --format template --template "@html.tpl" --output "$REPORTS_DIR/trivy-image.html") || FAILED_STAGES+=("Stage 4: Container Scan")
 
 # Deploy Application Container
 echo "[+] Stage 5: Deploying Juice Shop on Port 3000..."
 docker stop juice-shop 2>/dev/null || true
 docker rm juice-shop 2>/dev/null || true
-docker run -d --name juice-shop -p 3000:3000 $IMAGE_NAME
+docker run -d --name juice-shop -p 3000:3000 "$IMAGE_NAME" || FAILED_STAGES+=("Stage 5: Deploy Application Container")
 
 # Build Central Security Dashboard Index
 echo "[+] Stage 6: Building Dashboard Portal..."
-cat <<EOF > $REPORTS_DIR/index.html
+cat <<EOF > "$REPORTS_DIR/index.html" || FAILED_STAGES+=("Stage 6: Building Dashboard Portal")
 <!DOCTYPE html>
 <html>
 <head>
@@ -91,11 +94,21 @@ docker run -d \
   --name security-dashboard \
   -p 8000:80 \
   -v "$(pwd)/$REPORTS_DIR:/usr/share/nginx/html:ro" \
-  nginx:alpine
+  nginx:alpine || FAILED_STAGES+=("Stage 7: Hosting Security Dashboard")
 
 echo "=========================================="
 echo " [CI/CD] Pipeline Finished!"
 echo " Target App: http://fedora-ip:3000"
 echo " Dashboard:  http://fedora-ip:8000"
-echo "=========================================="
 
+if [ ${#FAILED_STAGES[@]} -ne 0 ]; then
+    echo "------------------------------------------"
+    echo " [!] WARNING: The following stage(s) failed:"
+    for stage in "${FAILED_STAGES[@]}"; do
+        echo "     - $stage"
+    done
+else
+    echo "------------------------------------------"
+    echo " [+] All stages completed successfully!"
+fi
+echo "=========================================="
