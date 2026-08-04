@@ -1,12 +1,20 @@
 #!/bin/bash
+set -e
+
 echo "=========================================="
 echo " [CI/CD] "
 echo "=========================================="
 
-TARGET_DIR="$HOME/dev/juice-shop"
+if [ -f .env ]; then
+    echo "[+] Loading environment variables from .env"
+    source .env
+fi
 
-REPORTS_DIR="./reports"
-mkdir -p $REPORTS_DIR
+REPORTS_DIR="${REPORTS_DIR:-./reports}"
+IMAGE_NAME="${IMAGE_NAME:-my-local-app:latest}"
+TARGET_DIR="${TARGET_DIR:-.}"
+
+mkdir -p "$REPORTS_DIR"
 
 if [ ! -f "html.tpl" ]; then
     echo "[+] Downloading Trivy HTML template..."
@@ -23,9 +31,8 @@ trivy fs "$TARGET_DIR" --severity HIGH,CRITICAL --format json --output $REPORTS_
 trivy fs "$TARGET_DIR" --severity HIGH,CRITICAL --format template --template "@html.tpl" --output $REPORTS_DIR/trivy-fs.html
 
 # Pull & Scan Container Image
-echo "[+] Stage 3: Pulling official Juice Shop image..."
-IMAGE_NAME="bkimminich/juice-shop"
-docker pull $IMAGE_NAME
+echo "[+] Stage 3: Building Container Image ($IMAGE_NAME)..."
+docker build -t "$IMAGE_NAME" "$TARGET_DIR"
 
 # Container Scan
 echo "[+] Stage 4: Running Trivy Container Image Scan..."

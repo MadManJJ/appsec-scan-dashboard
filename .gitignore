@@ -1,0 +1,10 @@
+# Environment variables (keep .env.example committed instead)
+.env
+
+# Generated security reports
+reports/
+*.json
+*.html
+
+# Dynamically downloaded template
+html.tpl
