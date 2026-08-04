@@ -14,6 +14,7 @@ fi
 REPORTS_DIR="${REPORTS_DIR:-./reports}"
 IMAGE_NAME="${IMAGE_NAME:-my-local-app:latest}"
 TARGET_DIR="${TARGET_DIR:-.}"
+CONTAINER_NAME="${CONTAINER_NAME:-my-app}"
 
 mkdir -p "$REPORTS_DIR"
 
@@ -41,10 +42,10 @@ echo "[+] Stage 4: Running Trivy Container Image Scan..."
  trivy image "$IMAGE_NAME" --severity CRITICAL --format template --template "@html.tpl" --output "$REPORTS_DIR/trivy-image.html") || FAILED_STAGES+=("Stage 4: Container Scan")
 
 # Deploy Application Container
-echo "[+] Stage 5: Deploying Juice Shop on Port 3000..."
-docker stop juice-shop 2>/dev/null || true
-docker rm juice-shop 2>/dev/null || true
-docker run -d --name juice-shop -p 3000:3000 "$IMAGE_NAME" || FAILED_STAGES+=("Stage 5: Deploy Application Container")
+echo "[+] Stage 5: Deploying Container ($CONTAINER_NAME)..."
+docker stop "$CONTAINER_NAME" 2>/dev/null || true
+docker rm "$CONTAINER_NAME" 2>/dev/null || true
+docker run -d --name "$CONTAINER_NAME" -p 3000:3000 "$IMAGE_NAME" || FAILED_STAGES+=("Stage 5: Deploy Application Container")
 
 # Build Central Security Dashboard Index
 echo "[+] Stage 6: Building Dashboard Portal..."
