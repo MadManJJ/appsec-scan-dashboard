@@ -1,6 +1,6 @@
 # Automated CI/CD Security Pipeline
 
-A local, reproducible DevSecOps pipeline demonstrating **Shift-Left Security** principles. Automates static code scanning, secret detection, container vulnerability checks, and security report aggregation before deployment. Built for local execution and easily portable to any CI/CD runner (e.g., GitHub Actions, GitLab CI).
+A local, reproducible DevSecOps pipeline demonstrating Shift-Left Security principles. Automates secret detection, filesystem and container vulnerability scanning, security report generation, and deployment. Built for local execution and easily portable to CI/CD runners such as GitHub Actions or GitLab CI.
 
 ---
 
